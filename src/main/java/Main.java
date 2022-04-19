@@ -1,18 +1,30 @@
 import java.io.IOException;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 
 public class Main {
     public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
-        int nCores = Runtime.getRuntime().availableProcessors();
+        int nCores = Runtime.getRuntime().availableProcessors(), arrayLength;
         long startTime, endTime;
         double totalTimeSeq, totalTimePar;
+        int[] array;
 
-        int[] array = new ArrayReader().readFileToArray("testcase1.txt");
-        System.out.println("\nNumbers read into array: " + array.length);
+
+        // If no argument given, creates new array of random numbers. Else, read file into array.
+        if (args.length == 0){
+            System.out.println("No argument found; Generating large array[80000000] to compute...");
+            array = new int[80000000];
+            for (int i = 0; i < array.length; i++) {
+                array[i] = new Random().nextInt(1900000000);
+            }
+            System.out.println("\nNumbers read into array: " + array.length);
+        } else {
+            array = new ArrayReader().readFileToArray(args[0]);
+            System.out.println("\nNumbers read into array: " + array.length);
+        }
 
         // SEQUENTIAL METHOD
-
         startTime = System.nanoTime();
         int[] resultSeq = new Sequential(array).findMinMax();
         endTime = System.nanoTime();
@@ -20,18 +32,14 @@ public class Main {
 
 
         // PARALLEL METHOD
-
         startTime = System.nanoTime();
         ParallelTask task = new ParallelTask(array, 0, array.length);
         ForkJoinPool pool = new ForkJoinPool(nCores);
         pool.execute(task);
-        pool.shutdown();
-
         endTime = System.nanoTime();
 
 
         // STATS
-
         int[] resultPar = task.get();
         totalTimePar = (double) (endTime-startTime)/1000000;
 

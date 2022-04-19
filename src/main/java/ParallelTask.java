@@ -2,11 +2,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RecursiveTask;
 
 public class ParallelTask extends RecursiveTask<int[]> {
+    private static final long serialVersionUID = 767439978300L;
     int[] array, result = new int[2], resultTemp1, resultTemp2;
     int minValue, maxValue;
     int start, end;
-    int threshold = 10000;
-    private static final long serialVersionUID = 767439978300L;
+    int threshold = 4000000;
 
     public ParallelTask(int[] array, int start, int end) {
         this.array = array;
@@ -22,9 +22,9 @@ public class ParallelTask extends RecursiveTask<int[]> {
 
     @Override
     protected int[] compute() {
-        if (end - start < threshold){
-            // TODO: COMPUTE
-            result = findMinMax();
+        if (end - start <= threshold){
+            result = new Sequential(array).findMinMax();
+
         } else {
             int middle = (end+start)/2;
             ParallelTask t1 = new ParallelTask(array, start, middle+1);
@@ -55,7 +55,6 @@ public class ParallelTask extends RecursiveTask<int[]> {
             if (x > result[1])
                 result[1] = x;
         }
-
         return result;
     }
 
