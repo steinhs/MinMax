@@ -1,15 +1,15 @@
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 
 public class Main {
     public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
-        int nCores = Runtime.getRuntime().availableProcessors(), arrayLength;
-        long startTime, endTime;
+        int nCores = Runtime.getRuntime().availableProcessors();
         double totalTimeSeq, totalTimePar;
         int[] array;
-
 
         // If no argument given, creates new array of random numbers. Else, read file into array.
         if (args.length == 0){
@@ -25,24 +25,19 @@ public class Main {
         }
 
         // SEQUENTIAL METHOD
-        startTime = System.nanoTime();
+        long startTimeSeq = System.nanoTime();
         int[] resultSeq = new Sequential(array).findMinMax();
-        endTime = System.nanoTime();
-        totalTimeSeq = (double) (endTime-startTime)/1000000;
-
+        long endTimeSeq = System.nanoTime();
+        totalTimeSeq = (double) (endTimeSeq-startTimeSeq)/1000000;
 
         // PARALLEL METHOD
-        startTime = System.nanoTime();
-        ParallelTask task = new ParallelTask(array, 0, array.length);
+        long startTimePar = System.nanoTime();
         ForkJoinPool pool = new ForkJoinPool(nCores);
-        pool.execute(task);
-        endTime = System.nanoTime();
-
+        int[] resultPar = pool.invoke(new ParallelTask(array, 0, array.length, array.length/2));
+        long endTimePar = System.nanoTime();
+        totalTimePar = (double) (endTimePar-startTimePar)/1000000;
 
         // STATS
-        int[] resultPar = task.get();
-        totalTimePar = (double) (endTime-startTime)/1000000;
-
         double speedup = totalTimeSeq/totalTimePar;
         double efficiency = speedup/nCores;
 

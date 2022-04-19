@@ -1,62 +1,45 @@
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RecursiveTask;
 
 public class ParallelTask extends RecursiveTask<int[]> {
-    private static final long serialVersionUID = 767439978300L;
-    int[] array, result = new int[2], resultTemp1, resultTemp2;
-    int minValue, maxValue;
+    int[] array, result = new int[2];
     int start, end;
-    int threshold = 4000000;
+    int threshold;
 
-    public ParallelTask(int[] array, int start, int end) {
+    public ParallelTask(int[] array, int start, int end, int threshold) {
         this.array = array;
         this.start = start;
         this.end = end;
         this.result[0] = array[0];
         this.result[1] = array[0];
-        this.minValue = array[0];
-        this.maxValue = array[0];
-        this.resultTemp1 = result;
-        this.resultTemp2 = result;
+        this.threshold = threshold;
     }
-
     @Override
     protected int[] compute() {
         if (end - start <= threshold){
-            result = new Sequential(array).findMinMax();
-
-        } else {
-            int middle = (end+start)/2;
-            ParallelTask t1 = new ParallelTask(array, start, middle+1);
-            ParallelTask t2 = new ParallelTask(array, middle+1, end);
-            invokeAll(t1, t2);
-            try {
-                resultTemp1 =  t1.get();
-                if (resultTemp1[0] < result[0])
-                    result[0] = resultTemp1[0];
-                if (resultTemp1[1] > result[1])
-                    result[1] = resultTemp1[1];
-                resultTemp2 =  t2.get();
-                if (resultTemp2[0] < result[0])
-                    result[0] = resultTemp2[0];
-                if (resultTemp2[1] > result[1])
-                    result[1] = resultTemp2[1];
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+            System.out.println("COMPUTE SEQUENTIALLY");
+            for (int x : array) {
+                if (x < result[0])
+                    result[0] = x;
+                if (x > result[1])
+                    result[1] = x;
             }
+        } else {
+            System.out.println("SPLIT UP INTO TWO NEW TASKS");
+            int middle = (end+start)/2;
+            ParallelTask l = new ParallelTask(array, start, middle+1, threshold);
+            ParallelTask r = new ParallelTask(array, middle+1, end, threshold);
+            l.fork();
+            int[] resultR = r.compute();
+            int[] resultL = l.join();
+            if (resultL[0] < result[0])
+                result[0] = resultL[0];
+            if (resultL[1] > result[1])
+                result[1] = resultL[1];
+            if (resultR[0] < result[0])
+                result[0] = resultR[0];
+            if (resultR[1] > result[1])
+                result[1] = resultR[1];
         }
         return result;
     }
-
-    public int[] findMinMax() {
-        for (int x : array) {
-            if (x < result[0])
-                result[0] = x;
-            if (x > result[1])
-                result[1] = x;
-        }
-        return result;
-    }
-
-
 }
