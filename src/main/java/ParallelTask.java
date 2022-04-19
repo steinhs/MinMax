@@ -16,7 +16,6 @@ public class ParallelTask extends RecursiveTask<int[]> {
     @Override
     protected int[] compute() {
         if (end - start <= threshold){
-            System.out.println("COMPUTE SEQUENTIALLY");
             for (int x : array) {
                 if (x < result[0])
                     result[0] = x;
@@ -24,7 +23,6 @@ public class ParallelTask extends RecursiveTask<int[]> {
                     result[1] = x;
             }
         } else {
-            System.out.println("SPLIT UP INTO TWO NEW TASKS");
             int middle = (end+start)/2;
             ParallelTask l = new ParallelTask(array, start, middle+1, threshold);
             ParallelTask r = new ParallelTask(array, middle+1, end, threshold);
